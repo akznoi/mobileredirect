@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAMID.edu.fordham.myapp",
+        "paths": [
+          "/oauth/callback",
+          "/callback",
+          "/login/callback"
+        ]
+      }
+    ]
+  }
+}
