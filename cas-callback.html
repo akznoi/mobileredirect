@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CAS Authentication</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <h2>Processing CAS Login...</h2>
+    <p id="status">Please wait...</p>
+
+    <script>
+        // Get the ticket from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const ticket = urlParams.get('ticket');
+        
+        if (!ticket) {
+            document.getElementById('status').textContent = 'Error: No ticket received';
+        } else {
+            // CAS service validation endpoint
+            const casServer = 'https://logindevaws.fordham.edu';
+            const serviceUrl = encodeURIComponent(window.location.origin + window.location.pathname);
+            const validateUrl = `${casServer}/cas/serviceValidate?service=${serviceUrl}&ticket=${ticket}`;
+            
+            // Validate the ticket
+            fetch(validateUrl)
+                .then(response => response.text())
+                .then(xmlText => {
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                    
+                    // Check for authentication success
+                    const authSuccess = xmlDoc.querySelector('authenticationSuccess');
+                    
+                    if (authSuccess) {
+                        // Extract user information
+                        const username = xmlDoc.querySelector('user')?.textContent;
+                        const attributes = {};
+                        
+                        // Parse attributes
+                        xmlDoc.querySelectorAll('attributes > *').forEach(attr => {
+                            attributes[attr.tagName] = attr.textContent;
+                        });
+                        
+                        // Create user data object
+                        const userData = {
+                            username: username,
+                            ticket: ticket,
+                            attributes: attributes
+                        };
+                        
+                        // Redirect back to mobile app with user data
+                        const appDeepLink = `myapp://login-success?data=${encodeURIComponent(JSON.stringify(userData))}`;
+                        
+                        document.getElementById('status').textContent = 'Login successful! Redirecting to app...';
+                        
+                        // Try to open the app
+                        window.location.href = appDeepLink;
+                        
+                        // Fallback message if app doesn't open
+                        setTimeout(() => {
+                            document.getElementById('status').innerHTML = 
+                                'If the app does not open automatically, <a href="' + appDeepLink + '">click here</a>';
+                        }, 2000);
+                        
+                    } else {
+                        // Authentication failed
+                        const authFailure = xmlDoc.querySelector('authenticationFailure');
+                        const errorMessage = authFailure?.textContent || 'Unknown error';
+                        document.getElementById('status').textContent = 'Authentication failed: ' + errorMessage;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('status').textContent = 'Error validating ticket: ' + error.message;
+                    console.error('Validation error:', error);
+                });
+        }
+    </script>
+</body>
+</html>
