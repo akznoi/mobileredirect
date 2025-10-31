@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OIDC Authentication</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <h2>OIDC Authentication</h2>
+    <p id="status">Processing authentication...</p>
+
+    <script>
+        // Get the authorization code from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const state = urlParams.get('state');
+        
+        if (!code) {
+            document.getElementById('status').className = 'error';
+            document.getElementById('status').innerHTML = 
+                '<strong>Error:</strong> No authorization code received<br>' +
+                '<small>URL: ' + window.location.href + '</small>';
+        } else {
+            // Create user data object for the app
+            const authData = {
+                code: code,
+                state: state,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Redirect back to mobile app with authorization code
+            // Using multiple schemes to ensure compatibility
+            const appDeepLink = `myapp://oauth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`;
+            const fordhamScheme = `fordham://oauth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`;
+            
+            document.getElementById('status').className = 'success';
+            document.getElementById('status').innerHTML = 
+                '<strong>✅ Authentication Successful!</strong><br><br>' +
+                '<p>Authorization code received. Redirecting to app...</p>' +
+                '<p><small>Code: ' + code.substring(0, 30) + '...</small></p>';
+            
+            // Try to open the app - try both schemes
+            setTimeout(() => {
+                window.location.href = fordhamScheme;
+                
+                // Fallback to alternative scheme
+                setTimeout(() => {
+                    window.location.href = appDeepLink;
+                }, 1000);
+            }, 500);
+            
+            // Show fallback message if app doesn't open
+            setTimeout(() => {
+                document.getElementById('status').innerHTML += 
+                    '<hr><p>If the app does not open automatically:</p>' +
+                    '<p><a href="' + fordhamScheme + '">Click here to open app (fordham://)</a></p>' +
+                    '<p><a href="' + appDeepLink + '">Or click here (myapp://)</a></p>';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
