@@ -50,7 +50,8 @@
                         };
                         
                         // Redirect back to mobile app with user data
-                        const appDeepLink = `myapp://login-success?data=${encodeURIComponent(JSON.stringify(userData))}`;
+                        //const appDeepLink = `myapp://login-success?data=${encodeURIComponent(JSON.stringify(userData))}`;
+                        const appDeepLink = `mobilesso://cas-callback?ticket=${encodeURIComponent(ticket)}&username=${encodeURIComponent(username)}`;
                         
                         document.getElementById('status').textContent = 'Login successful! Redirecting to app...';
                         
